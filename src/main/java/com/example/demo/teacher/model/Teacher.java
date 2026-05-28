@@ -1,10 +1,13 @@
 package com.example.demo.teacher.model;
 
 import com.example.demo.common.Language;
+import com.example.demo.student.model.Student;
+import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+
+@Entity
 @Getter
 @Setter
 @AllArgsConstructor
@@ -12,8 +15,18 @@ import java.util.List;
 @Builder
 
 public class Teacher {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private String firstName;
     private String lastName;
-    private List<Language> languages = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
+    @ElementCollection(fetch = FetchType.EAGER) // pobiera wszystkie jezyki dla nauczyciela odrazu, bazowo jest LAZY wiec za kazdym razem jak odnosisz sie do jezykow to wykonuje sie dodatkowe zapytanie to DB
+    @CollectionTable(name =  "teacher_language", joinColumns = @JoinColumn(name = "teacher_id"))
+    @Column(name = "language")
+    private Set<Language> languages;
+
+    @OneToMany(mappedBy = "teacher") // oznaczamy to tak aby studenci mogli byc wyszukiwani po id teachera
+    private Set<Student> students;
+
 }
