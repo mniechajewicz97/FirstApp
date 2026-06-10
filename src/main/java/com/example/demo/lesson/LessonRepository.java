@@ -1,11 +1,16 @@
 package com.example.demo.lesson;
 
 import com.example.demo.lesson.model.Lesson;
+import com.example.demo.teacher.model.Teacher;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 
 
 public interface LessonRepository extends JpaRepository<Lesson, Long> {
+    boolean existsByTeacherAndLessonDateGreaterThanAndLessonDateLessThan(Teacher teacher, LocalDateTime from, LocalDateTime to);
+
+
 //    private final List<Lesson> lessons = new ArrayList<>();
 //    private final TeacherRepository teacherRepository;
 //    private final StudentRepository studentRepository;

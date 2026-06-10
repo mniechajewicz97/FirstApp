@@ -1,6 +1,7 @@
 package com.example.demo.teacher;
 
 import com.example.demo.common.Language;
+import com.example.demo.common.dto.TeacherDTO;
 import com.example.demo.student.StudentService;
 import com.example.demo.teacher.model.Teacher;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Set;
 
 
@@ -43,6 +45,11 @@ public class TeacherController {
     public String save(Teacher teacher) {
         teacherService.save(teacher);
         return "redirect:/teachers";
+    }
+    @GetMapping(params = "language")
+    @ResponseBody // tresc od http ktora dostaje user
+    public List<TeacherDTO> findByLanguages(@RequestParam Language language) {
+        return teacherService.findByLanguagesContains(language);
     }
 }
 

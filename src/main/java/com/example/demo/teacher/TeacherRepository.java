@@ -1,11 +1,18 @@
 package com.example.demo.teacher;
 
+import com.example.demo.common.Language;
 import com.example.demo.teacher.model.Teacher;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+
+import java.util.List;
+
 public interface TeacherRepository extends JpaRepository<Teacher, Long> {
 //    private final List<Teacher> teachers = new ArrayList<>();
-//
+
+    List<Teacher> findAllByLanguagesContains(Language language); //derived query to pozwala filtrowac nauczycieli
+//todo zobacz sobie slowa klucz tego typu
+
 //    @PostConstruct
 //    public void populateTeachers() {
 //        teachers.add(Teacher.builder().id(1111).firstName("Adix").lastName("Brygider").languages(List.of(Language.JAVA, Language.PYTHON, Language.KOTLIN)).build());
