@@ -20,6 +20,7 @@ public class TeacherController {
     private final TeacherService teacherService;
     private final StudentService studentService;
 
+
     @GetMapping
     public String getAll(Model model) {
         model.addAttribute("teachers", teacherService.findAll());

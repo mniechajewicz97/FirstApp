@@ -21,7 +21,7 @@ public class TeacherService {
 
     public List<Teacher> findAll() {
 
-        return teacherRepository.findAll();
+      return teacherRepository.findAll();
     }
 
     public void deleteById(long id) {
@@ -48,7 +48,7 @@ public class TeacherService {
 
     public List<TeacherDTO> findByLanguagesContains(Language language) {
        List<TeacherDTO> teacherDTOS = teacherRepository.findAllByLanguagesContains(language).stream()
-               .map(t-> new TeacherDTO(t.getId(), t.getFirstName(), t.getLastName()))
+               .map(TeacherDTO::from)// wywolanie metody statycznej dla kazdego elementu
                .toList();
        return teacherDTOS;
 
