@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Zmiana terminu lekcji</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .nav {
+            margin-bottom: 20px;
+        }
+
+        .nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #2196F3;
+            font-weight: bold;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 600px;
+            background-color: white;
+            padding: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+
+        .info-row {
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        form {
+            margin-top: 25px;
+        }
+
+        input[type="datetime-local"] {
+            padding: 10px;
+            width: 100%;
+            max-width: 300px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 15px;
+        }
+
+        .save-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 18px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .save-btn:hover {
+            background-color: #45a049;
+        }
+
+        .back-btn {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 18px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .back-btn:hover {
+            background-color: #0b7dda;
+        }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <a href="/students">👨 Studenci</a>
+    <a href="/teachers">👨‍🏫 Nauczyciele</a>
+    <a href="/lessons">📚 Lekcje</a>
+</div>
+
+<h1>Zmiana terminu lekcji</h1>
+
+<div class="card">
+
+    <div class="info-row">
+        <span class="label">Kursant:</span>
+        <span th:text="|${lesson.student.firstName} ${lesson.student.lastName}|"></span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Nauczyciel:</span>
+        <span th:text="|${lesson.teacher.firstName} ${lesson.teacher.lastName}|"></span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Aktualny termin:</span>
+        <span th:text="${lesson.lessonDate}"></span>
+    </div>
+
+    <form th:action="@{/lessons/change}" method="post">
+
+        <input type="hidden" name="lessonId" th:value="${lesson.id}">
+
+        <label for="newDate" class="label">Nowy termin lekcji:</label><br>
+        <input type="datetime-local" id="newDate" name="newDate" required>
+
+        <br>
+
+        <button type="submit" class="save-btn">Zapisz nowy termin</button>
+        <a th:href="@{/lessons}" class="back-btn">Wróć do listy</a>
+
+    </form>
+
+</div>
+
+</body>
+</html>

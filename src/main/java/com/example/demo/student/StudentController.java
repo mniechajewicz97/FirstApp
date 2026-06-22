@@ -2,6 +2,7 @@ package com.example.demo.student;
 
 
 import com.example.demo.common.Language;
+import com.example.demo.common.dto.TeacherDTO;
 import com.example.demo.student.model.Student;
 import com.example.demo.teacher.TeacherService;
 import com.example.demo.teacher.model.Teacher;
@@ -9,10 +10,9 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -32,21 +32,35 @@ public class StudentController {
         studentService.deleteById(id);
         return "redirect:/students";
     }
+
     @GetMapping("/create")
     public String create(Model model) {
         model.addAttribute("languages", Language.values());
         model.addAttribute("teachers", teacherService.findAll());
         return "student/register";
     }
+
     @PostMapping("/create")
     public String save(Student student, Long teacherId) {
         studentService.save(student, teacherId);
         return "redirect:/students";
     }
 
-//    @GetMapping("/{id}")
-//    public Student findById(@PathVariable long id) {
-//      return studentService.findById(id);
-//
-//    }
+    @GetMapping("/changeteacher")
+    public String changeTeacher(Model model, @RequestParam Long studentId) {
+        model.addAttribute("student", studentService.findById(studentId));
+        model.addAttribute("teachers", teacherService.findByLanguagesContains(studentService.findById(studentId).getLanguage()));
+
+        return "student/changeteacher";
+
+    }
+    @PostMapping("/changeteacher")
+    public String changeTeacher(@RequestParam Long studentId, @RequestParam Long newTeacherId) {
+        studentService.changeTeacher(studentId, newTeacherId);
+
+        return "redirect:/students";
+
+    }
+
+
 }

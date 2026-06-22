@@ -5,6 +5,7 @@ import com.example.demo.lesson.model.Lesson;
 import com.example.demo.student.StudentService;
 import com.example.demo.teacher.TeacherService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +47,19 @@ public class LessonController {
         lessonService.save(lesson, studentId, teacherId);
         return  "redirect:/lessons";
     }
+    @GetMapping("/change")
+    public String change(Model model, @RequestParam Long lessonId){
+        model.addAttribute("lesson", lessonService.findById(lessonId));
+        return "lesson/change";
+    }
+    @PostMapping("/change")
+    public String change(@RequestParam Long lessonId,
+                         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime newDate) { //iso zmienia date z tekstowego formatu na localdatetime
+        lessonService.change(lessonId, newDate); // adnotacja datetimeformat mowi jak ten tekst przeczytac
+        return "redirect:/lessons";
+    }
 
+    }
 
 
 //    @GetMapping("/{id}")
@@ -55,4 +68,4 @@ public class LessonController {
 //    }
 
 
-}
+

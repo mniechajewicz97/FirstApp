@@ -19,9 +19,12 @@ public class TeacherService {
     private final StudentRepository studentRepository;
 
 
-    public List<Teacher> findAll() {
+    public List<TeacherDTO> findAll() {
 
-      return teacherRepository.findAll();
+      List<TeacherDTO> allTeachersDTOS = teacherRepository.findAll().stream()
+              .map(TeacherDTO::from)
+              .toList();
+        return allTeachersDTOS;
     }
 
     public void deleteById(long id) {
@@ -37,9 +40,12 @@ public class TeacherService {
 
     }
 
-    public Teacher findById(long id) {
-        return teacherRepository.findById(id)
+    public TeacherDTO findById(long id) {
+        TeacherDTO teacherDTO = teacherRepository.findById(id)
+                .map(TeacherDTO::from)
                 .orElseThrow(() -> new EntityNotFoundException("Teacher with id " + id + " not found"));
+
+        return teacherDTO;
     }
 
     public void save(Teacher teacher) {

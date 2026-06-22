@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -55,6 +56,33 @@ public class LessonService {
        lesson.setStudent(student);
        lesson.setTeacher(teacher);
        lessonRepository.save(lesson);
+
+    }
+    public void change(Long lessonId, LocalDateTime newDate) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(()-> new EntityNotFoundException("Lesson with id " + lessonId + " not found"));
+        if (newDate == null) {
+            throw  new IllegalArgumentException("Lesson date is null");
+        }
+        if (newDate.isBefore(LocalDateTime.now())) {
+            throw  new IllegalArgumentException("Lesson date is before current date");
+        }
+        Teacher teacher = lesson.getTeacher();
+        Student student = lesson.getStudent();
+
+        LocalDateTime from =  newDate.minusHours(1);
+        LocalDateTime to =  newDate.plusHours(1);
+
+        if (lessonRepository.existsByStudentAndLessonDateGreaterThanAndLessonDateLessThanAndIdNot(student, from, to, lessonId)) {
+            throw new  IllegalStateException("Lesson with id " + lessonId + " is already exists");
+        }
+        if (lessonRepository.existsByTeacherAndLessonDateGreaterThanAndLessonDateLessThanAndIdNot(teacher, from, to, lessonId)) {
+            throw new  IllegalStateException("Lesson with id " + lessonId + " is already exists");
+        }
+
+        lesson.setLessonDate(newDate);
+        lessonRepository.save(lesson);
+
 
     }
 

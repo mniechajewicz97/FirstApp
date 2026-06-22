@@ -75,6 +75,7 @@
     <td th:text="${student.lastName}"></td>
     <td th:text="${student.language}"></td>
         <td>
+            <a th:href="@{/students/changeteacher(studentId=${student.id})}" class="change-btn">Zmień nauczyciela</a>
             <a th:href="@{/students/{id}(id=${student.id})}" class="delete-btn">Usuń</a>
         </td>
     </tr>

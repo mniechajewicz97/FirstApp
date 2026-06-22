@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Zmiana nauczyciela studenta</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .nav {
+            margin-bottom: 20px;
+        }
+
+        .nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #2196F3;
+            font-weight: bold;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 600px;
+            background-color: white;
+            padding: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+
+        .info-row {
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        form {
+            margin-top: 25px;
+        }
+
+        select {
+            padding: 10px;
+            width: 100%;
+            max-width: 350px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 15px;
+            background-color: white;
+        }
+
+        .save-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 18px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .save-btn:hover {
+            background-color: #45a049;
+        }
+
+        .back-btn {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 18px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .back-btn:hover {
+            background-color: #0b7dda;
+        }
+
+        .message {
+            margin-top: 8px;
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <a href="/students">👨 Studenci</a>
+    <a href="/teachers">👨‍🏫 Nauczyciele</a>
+    <a href="/lessons">📚 Lekcje</a>
+</div>
+
+<h1>Zmiana nauczyciela studenta</h1>
+
+<div class="card">
+
+    <div class="info-row">
+        <span class="label">Student:</span>
+        <span th:text="|${student.firstName} ${student.lastName}|"></span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Język studenta:</span>
+        <span id="studentLanguage" th:text="${student.language}" th:data-language="${student.language}"></span>
+    </div>
+
+    <div class="info-row">
+        <span class="label">Aktualny nauczyciel:</span>
+
+        <span th:if="${student.teacher != null}"
+              th:text="|${student.teacher.firstName} ${student.teacher.lastName}|"></span>
+
+        <span th:if="${student.teacher == null}">
+            Brak przypisanego nauczyciela
+        </span>
+    </div>
+
+    <form th:action="@{/students/changeteacher}" method="post">
+
+        <input type="hidden" name="studentId" th:value="${student.id}">
+
+        <label for="newTeacherId" class="label">Nowy nauczyciel:</label><br>
+
+        <select id="newTeacherId" name="newTeacherId" required>
+            <option value="">Ładowanie nauczycieli...</option>
+        </select>
+
+        <div id="message" class="message"></div>
+
+        <button type="submit" class="save-btn">Zapisz nowego nauczyciela</button>
+        <a th:href="@{/students}" class="back-btn">Wróć do listy</a>
+
+    </form>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const languageElement = document.getElementById("studentLanguage");
+        const teacherSelect = document.getElementById("newTeacherId");
+        const message = document.getElementById("message");
+
+        const language = languageElement.dataset.language;
+
+        teacherSelect.innerHTML = "";
+        teacherSelect.disabled = true;
+
+        fetch("/teachers?language=" + encodeURIComponent(language))
+            .then(response => response.json())
+            .then(teachers => {
+                teacherSelect.innerHTML = "";
+
+                if (teachers.length === 0) {
+                    const option = document.createElement("option");
+                    option.value = "";
+                    option.textContent = "Brak nauczycieli dla tego języka";
+                    teacherSelect.appendChild(option);
+
+                    message.textContent = "Nie znaleziono nauczycieli uczących języka: " + language;
+                    return;
+                }
+
+                const defaultOption = document.createElement("option");
+                defaultOption.value = "";
+                defaultOption.textContent = "-- Wybierz nauczyciela --";
+                teacherSelect.appendChild(defaultOption);
+
+                teachers.forEach(teacher => {
+                    const option = document.createElement("option");
+                    option.value = teacher.id;
+                    option.textContent = teacher.firstName + " " + teacher.lastName;
+                    teacherSelect.appendChild(option);
+                });
+
+                teacherSelect.disabled = false;
+                message.textContent = "Wyświetlono tylko nauczycieli uczących języka: " + language;
+            })
+            .catch(error => {
+                teacherSelect.innerHTML = "";
+
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = "Błąd ładowania nauczycieli";
+                teacherSelect.appendChild(option);
+
+                message.textContent = "Nie udało się pobrać listy nauczycieli.";
+            });
+    });
+</script>
+
+</body>
+</html>
