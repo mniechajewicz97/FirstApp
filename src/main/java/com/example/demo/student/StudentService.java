@@ -1,11 +1,13 @@
 package com.example.demo.student;
 
+import com.example.demo.common.dto.StudentDTO;
 import com.example.demo.student.model.Student;
 import com.example.demo.teacher.TeacherRepository;
 import com.example.demo.teacher.model.Teacher;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
@@ -24,7 +26,7 @@ public class StudentService {
 
     public Student findById(long id) {
         return studentRepository.findById(id)
-                .orElseThrow(()-> new EntityNotFoundException("Student with id " + id + " not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Student with id " + id + " not found"));
     }
 
 
@@ -36,16 +38,25 @@ public class StudentService {
     }
 
     public void changeTeacher(Long studentId, Long newTeacherId) {
-    Student student = studentRepository.findById(studentId).orElseThrow(()-> new EntityNotFoundException("Student with id " + studentId + " not found"));
-    Teacher teacher = teacherRepository.findById(newTeacherId).orElseThrow(()-> new EntityNotFoundException("Teacher with id " + newTeacherId + " not found"));
+        Student student = studentRepository.findById(studentId).orElseThrow(() -> new EntityNotFoundException("Student with id " + studentId + " not found"));
+        Teacher teacher = teacherRepository.findById(newTeacherId).orElseThrow(() -> new EntityNotFoundException("Teacher with id " + newTeacherId + " not found"));
 
-    if (!teacher.getLanguages().contains(student.getLanguage())) {
-        throw new IllegalArgumentException("Teacher does not teach student language: " + student.getLanguage());
-    }
+        if (!teacher.getLanguages().contains(student.getLanguage())) {
+            throw new IllegalArgumentException("Teacher does not teach student language: " + student.getLanguage());
+        }
         student.setTeacher(teacher);
         studentRepository.save(student);
     }
 
 
+    public List<StudentDTO> findAllByTeacher(Long teacherId) {
+        teacherRepository.findById(teacherId).orElseThrow(
+                () -> new EntityNotFoundException("Teacher with id " + teacherId + " not found"));
+
+        return studentRepository.findAllByTeacherId(teacherId).stream()
+                .map(StudentDTO::from)
+                .toList();
+
     }
+}
 

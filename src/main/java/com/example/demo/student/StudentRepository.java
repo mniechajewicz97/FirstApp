@@ -3,8 +3,13 @@ package com.example.demo.student;
 import com.example.demo.student.model.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.awt.*;
+import java.util.List;
+
 
 public interface StudentRepository extends JpaRepository<Student, Long> {
+
+    List<Student> findAllByTeacherId(Long teacherId);
 //    private final List<Student> students = new ArrayList<>(); // final bo po stworzeniu listy nie jest ona edytowalna
 //
 //    @PostConstruct // to powoduje, ze zawsze po odpaleniu apki ta metoda sie wykona

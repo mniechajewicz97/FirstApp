@@ -2,6 +2,7 @@ package com.example.demo.student;
 
 
 import com.example.demo.common.Language;
+import com.example.demo.common.dto.StudentDTO;
 import com.example.demo.common.dto.TeacherDTO;
 import com.example.demo.student.model.Student;
 import com.example.demo.teacher.TeacherService;
@@ -60,6 +61,13 @@ public class StudentController {
 
         return "redirect:/students";
 
+    }
+
+    @GetMapping(params = "teacher")
+    @ResponseBody
+    public List<StudentDTO> findAllByTeacher(@RequestParam ("teacher") Long teacherId) {
+
+        return studentService.findAllByTeacher(teacherId);
     }
 
 
