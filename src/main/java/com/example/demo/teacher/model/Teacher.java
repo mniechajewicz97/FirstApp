@@ -21,12 +21,12 @@ public class Teacher {
     private String firstName;
     private String lastName;
     @Enumerated(EnumType.STRING)
-    @ElementCollection(fetch = FetchType.EAGER) // pobiera wszystkie jezyki dla nauczyciela odrazu, bazowo jest LAZY wiec za kazdym razem jak odnosisz sie do jezykow to wykonuje sie dodatkowe zapytanie to DB
+    @ElementCollection(fetch = FetchType.EAGER) // pobiera wszystkie jezyki dla nauczyciela od razu, bazowo jest LAZY wiec za kazdym razem jak odnosisz sie do jezykow to wykonuje sie dodatkowe zapytanie to DB
     @CollectionTable(name =  "teacher_language", joinColumns = @JoinColumn(name = "teacher_id"))
     @Column(name = "language")
     private Set<Language> languages;
 
-    @OneToMany(mappedBy = "teacher") // oznaczamy to tak aby studenci mogli byc wyszukiwani po id teachera
+    @OneToMany(mappedBy = "teacher") // oznaczamy to tak, aby studenci mogli byc wyszukiwani po id teachera
     private Set<Student> students;
 
 }

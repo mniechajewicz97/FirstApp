@@ -14,7 +14,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 //
 //    @PostConstruct // to powoduje, ze zawsze po odpaleniu apki ta metoda sie wykona
 //    public void populateStudents() {
-////        students.add(new Student(1234, null, "Kowalski", Language.JAVA));
+//        students.add(new Student(1234, null, "Kowalski", Language.JAVA));
 //        students.add(Student.builder().id(1234).lastName("Kowalski").language(Language.JAVA).build());
 //        students.add(Student.builder().firstName("Monika").lastName("Niechajewicz").id(1235).language(Language.JAVA).build());
 //        students.add(Student.builder().firstName("Hieronim").lastName("Pietruszka").id(6969).language(Language.PYTHON).build());

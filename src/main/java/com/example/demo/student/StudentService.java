@@ -16,8 +16,11 @@ public class StudentService {
     private final StudentRepository studentRepository; //dependency injection
     private final TeacherRepository teacherRepository;
 
-    public List<Student> findAll() {
-        return studentRepository.findAll();
+    public List<StudentDTO> findAll() {
+        List<StudentDTO> allStudentsDTOs = studentRepository.findAll().stream()
+                .map(StudentDTO::from)
+                .toList();
+        return allStudentsDTOs;
     }
 
     public void deleteById(long id) {
@@ -44,6 +47,8 @@ public class StudentService {
         if (!teacher.getLanguages().contains(student.getLanguage())) {
             throw new IllegalArgumentException("Teacher does not teach student language: " + student.getLanguage());
         }
+
+
         student.setTeacher(teacher);
         studentRepository.save(student);
     }
@@ -54,7 +59,7 @@ public class StudentService {
                 () -> new EntityNotFoundException("Teacher with id " + teacherId + " not found"));
 
         return studentRepository.findAllByTeacherId(teacherId).stream()
-                .map(StudentDTO::from)
+                .map(StudentDTO::from) // mozna tez: .map(student -> StudentDTO.from(student))
                 .toList();
 
     }
