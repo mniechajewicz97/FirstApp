@@ -8,6 +8,8 @@ import com.example.demo.teacher.model.Teacher;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -21,17 +23,17 @@ public class TeacherService {
 
     public List<TeacherDTO> findAll() {
 
-      List<TeacherDTO> allTeachersDTOS = teacherRepository.findAll().stream()
-              .map(TeacherDTO::from)
-              .toList();
+        List<TeacherDTO> allTeachersDTOS = teacherRepository.findAll().stream()
+                .map(TeacherDTO::from)
+                .toList();
         return allTeachersDTOS;
     }
-
+    @Transactional
     public void deleteById(long id) {
 
-       Teacher removedTeacher = teacherRepository.findById(id)
-               .orElseThrow( ()-> new EntityNotFoundException("No teacher found"));
-        Set<Student> students =  removedTeacher.getStudents();
+        Teacher removedTeacher = teacherRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Teacher with id " + id + " not found"));
+        Set<Student> students = removedTeacher.getStudents();
         students.forEach(student -> {
             student.setTeacher(null);
         });
@@ -49,18 +51,19 @@ public class TeacherService {
     }
 
     public void save(Teacher teacher) {
+
         teacherRepository.save(teacher);
-        }
+    }
 
     public List<TeacherDTO> findByLanguagesContains(Language language) {
-       List<TeacherDTO> teacherDTOS = teacherRepository.findAllByLanguagesContains(language).stream()
-               .map(TeacherDTO::from)// wywolanie metody statycznej dla kazdego elementu
-               .toList();
-       return teacherDTOS;
+        List<TeacherDTO> teacherDTOS = teacherRepository.findAllByLanguagesContains(language).stream()
+                .map(TeacherDTO::from)// wywolanie metody statycznej dla kazdego elementu
+                .toList();
+        return teacherDTOS;
 
 
     }
 
 
-    }
+}
 

@@ -1,5 +1,6 @@
 package com.example.demo.student;
 
+import com.example.demo.common.LanguageMismatchException;
 import com.example.demo.common.dto.StudentDTO;
 import com.example.demo.student.model.Student;
 import com.example.demo.teacher.TeacherRepository;
@@ -7,6 +8,8 @@ import com.example.demo.teacher.model.Teacher;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -32,20 +35,20 @@ public class StudentService {
                 .orElseThrow(() -> new EntityNotFoundException("Student with id " + id + " not found"));
     }
 
-
+    @Transactional // oba wyjatki dziedzicza po Runtimeexception wiec nie ma potrzby dawania w nawiasach bo rollback wydarzy sie automatycznie
     public void save(Student student, Long teacherId) {
         Teacher teacher = teacherRepository.findById(teacherId).orElseThrow(
                 () -> new EntityNotFoundException("Teacher with id " + teacherId + " not found"));
         student.setTeacher(teacher);
         studentRepository.save(student);
     }
-
+    @Transactional //jw
     public void changeTeacher(Long studentId, Long newTeacherId) {
         Student student = studentRepository.findById(studentId).orElseThrow(() -> new EntityNotFoundException("Student with id " + studentId + " not found"));
         Teacher teacher = teacherRepository.findById(newTeacherId).orElseThrow(() -> new EntityNotFoundException("Teacher with id " + newTeacherId + " not found"));
 
         if (!teacher.getLanguages().contains(student.getLanguage())) {
-            throw new IllegalArgumentException("Teacher does not teach student language: " + student.getLanguage());
+            throw new LanguageMismatchException("Teacher does not teach language: " + student.getLanguage());
         }
 
 

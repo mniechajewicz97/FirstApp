@@ -5,6 +5,7 @@ import com.example.demo.common.dto.TeacherDTO;
 import com.example.demo.student.StudentRepository;
 import com.example.demo.student.model.Student;
 import com.example.demo.teacher.model.Teacher;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -15,10 +16,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TeacherServiceTest {
@@ -92,6 +93,18 @@ public class TeacherServiceTest {
 
 
     }
+    @Test
+    void testDeleteById_WhenTeacherDoesntExist_ThrowsEntityNotFoundException() {
+
+        Long teacherId = 1L;
+        when(teacherRepository.findById(teacherId)).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> teacherService.deleteById(teacherId))
+                .withMessage("Teacher with id " + teacherId + " not found");
+        verifyNoMoreInteractions(teacherRepository);
+
+    }
 
     @Test
     void testFindById_ResultsInTeacherDTOBeingReturned() {
@@ -112,6 +125,17 @@ public class TeacherServiceTest {
         assertEquals(teacher.getFirstName(), result.getFirstName());
         assertEquals(teacher.getLastName(), result.getLastName());
         assertEquals(teacherId, result.getId());
+
+    }
+    @Test
+    void testFindById_WhenTeacherDoesntExist_ThrowsEntityNotFoundException() {
+
+        Long teacherId = 1L;
+        when(teacherRepository.findById(teacherId)).thenReturn(Optional.empty());
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> teacherService.findById(teacherId))
+                .withMessage("Teacher with id " + teacherId + " not found");
+        verifyNoMoreInteractions(teacherRepository);
 
     }
 

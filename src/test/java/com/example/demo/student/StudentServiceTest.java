@@ -1,10 +1,12 @@
 package com.example.demo.student;
 
 import com.example.demo.common.Language;
+import com.example.demo.common.LanguageMismatchException;
 import com.example.demo.common.dto.StudentDTO;
 import com.example.demo.student.model.Student;
 import com.example.demo.teacher.TeacherRepository;
 import com.example.demo.teacher.model.Teacher;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -17,10 +19,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.verify;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class StudentServiceTest {
@@ -82,6 +84,24 @@ public class StudentServiceTest {
         assertEquals(teacherId, savedTeacher.getId());
 
     }
+
+    @Test
+    void testSave_WhenTeacherDoesNotExist_ThrowsEntityNotFoundException() {
+        Student student = Student.builder()
+                .id(3L)
+                .build();
+        Teacher teacher = Teacher.builder()
+                .id(1L)
+                .build();
+        when(teacherRepository.findById(teacher.getId())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(()-> studentService.save(student, teacher.getId()))
+                .withMessage("Teacher with id " + teacher.getId() + " not found");
+
+    }
+
+
     @Test
     void testChangeTeacher_ResultsInTeacherBeingChanged() {
         //given
@@ -117,8 +137,68 @@ public class StudentServiceTest {
         assertEquals(Language.JAVA, savedStudent.getLanguage());
         assertTrue(savedTeacher.getLanguages().contains(savedStudent.getLanguage()));
 
+    }
+    @Test
+    void testChangeTeacher_WhenStudentDoesNotExist_ThrowsEntityNotFoundException() {
+
+        Long studentId = 1L;
+        Long teacherId = 2L;
+
+        when(studentRepository.findById(studentId)).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(()-> studentService.changeTeacher(studentId, teacherId))
+                .withMessage("Student with id " + studentId + " not found");
+
+        verifyNoMoreInteractions(studentRepository);
 
     }
+    @Test
+    void testChangeTeacher_WhenTeacherDoesNotExist_ThrowsEntityNotFoundException() {
+
+        Student student = Student.builder()
+                .id(2L)
+                .language(Language.JAVA)
+                .build();
+        Long teacherId = 2L;
+        when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
+        when(teacherRepository.findById(teacherId)).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(()-> studentService.changeTeacher(student.getId(), teacherId))
+                .withMessage("Teacher with id " + teacherId + " not found");
+
+        verifyNoMoreInteractions(studentRepository);
+    }
+
+    @Test
+    void testChangeTeacher_WhenTeacherDoesNotContainSelectedLanguage_ThrowsLanguageMismatchException() {
+        //given
+        Student student = Student.builder()
+                .id(2L)
+                .language(Language.JAVA)
+                .build();
+
+        Teacher teacher = Teacher.builder()
+                .id(4L)
+                .languages(Set.of(Language.C))
+                .build();
+
+        Long studentId = student.getId();
+        Long teacherId = teacher.getId();
+
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(teacherRepository.findById(teacherId)).thenReturn(Optional.of(teacher));
+
+        //when and then
+        assertThatExceptionOfType(LanguageMismatchException.class)
+                .isThrownBy(() -> studentService.changeTeacher(studentId, teacherId))
+                .withMessage("Teacher does not teach language: " + student.getLanguage());
+
+        verifyNoMoreInteractions(studentRepository);
+    }
+
+
     @Test
     void testFindAllByTeacher_ResultsInStudentsBeingReturned() {
 
@@ -144,7 +224,7 @@ public class StudentServiceTest {
         when(studentRepository.findAllByTeacherId(teacherId)).thenReturn(students);
 
         //when
-       List<StudentDTO> result = studentService.findAllByTeacher(teacherId);
+        List<StudentDTO> result = studentService.findAllByTeacher(teacherId);
 
         //then
         verify(studentRepository).findAllByTeacherId(teacherId);
@@ -158,7 +238,15 @@ public class StudentServiceTest {
         verify(teacherRepository).findById(teacherId);
 
     }
+    @Test
+    void testFindAllByTeacher_WhenTeacherDoesNotExist_ThrowsEntityNotFoundException() {
+        Long teacherId = 1L;
+        when(teacherRepository.findById(teacherId)).thenReturn(Optional.empty());
 
-
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> studentService.findAllByTeacher(teacherId))
+                .withMessage("Teacher with id " + teacherId + " not found");
+        verifyNoMoreInteractions(teacherRepository);
+    }
 
 }

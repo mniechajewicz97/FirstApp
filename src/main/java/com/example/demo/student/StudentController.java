@@ -37,7 +37,6 @@ public class StudentController {
     @GetMapping("/create")
     public String create(Model model) {
         model.addAttribute("languages", Language.values());
-        model.addAttribute("teachers", teacherService.findAll());
         return "student/register";
     }
 
@@ -55,6 +54,7 @@ public class StudentController {
         return "student/changeTeacher";
 
     }
+
     @PostMapping("/changeTeacher")
     public String changeTeacher(@RequestParam Long studentId, @RequestParam Long newTeacherId) {
         studentService.changeTeacher(studentId, newTeacherId);
@@ -65,7 +65,7 @@ public class StudentController {
 
     @GetMapping(params = "teacher")
     @ResponseBody
-    public List<StudentDTO> findAllByTeacher(@RequestParam ("teacher") Long teacherId) {
+    public List<StudentDTO> findAllByTeacher(@RequestParam("teacher") Long teacherId) {
 
         return studentService.findAllByTeacher(teacherId);
     }
