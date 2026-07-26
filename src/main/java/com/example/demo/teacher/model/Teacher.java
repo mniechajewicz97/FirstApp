@@ -20,6 +20,8 @@ public class Teacher {
     private long id;
     private String firstName;
     private String lastName;
+    private boolean deleted;
+
     @Enumerated(EnumType.STRING)
     @ElementCollection(fetch = FetchType.EAGER) // pobiera wszystkie jezyki dla nauczyciela od razu, bazowo jest LAZY wiec za kazdym razem jak odnosisz sie do jezykow to wykonuje sie dodatkowe zapytanie to DB
     @CollectionTable(name =  "teacher_language", joinColumns = @JoinColumn(name = "teacher_id"))

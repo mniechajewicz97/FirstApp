@@ -62,9 +62,7 @@ public class LessonService {
         lessonRepository.save(lesson);
     }
 
-    @Transactional
-    public void change(Long lessonId, LocalDateTime newDate) {
-
+    private void lessonDateValidator(LocalDateTime newDate) {
         if (newDate == null) {
             throw new IllegalArgumentException("Lesson date is null");
         }
@@ -72,6 +70,12 @@ public class LessonService {
         if (newDate.isBefore(LocalDateTime.now())) {
             throw new LessonDateInPastException("Lesson date is before current date");
         }
+    }
+
+    @Transactional
+    public void change(Long lessonId, LocalDateTime newDate) {
+
+        lessonDateValidator(newDate);
 
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new EntityNotFoundException("Lesson with id " + lessonId + " not found"));
@@ -80,13 +84,12 @@ public class LessonService {
         Student student = lesson.getStudent();
 
         lessonRepository.delete(lesson);// usuwamy lekcje, zeby termin nie kolidowal
-        lessonRepository.flush(); // flush sluzy do usuniecia tego natychmiastowo
 
         LocalDateTime from = newDate.minusHours(1);
         LocalDateTime to = newDate.plusHours(1);
 
-        studentHasConflict(student, from, to, lessonId);
-        teacherHasConflict(teacher, from, to, lessonId);
+        studentHasConflict(student, from, to);
+        teacherHasConflict(teacher, from, to);
 
 //        lesson.setLessonDate(newDate);
         Lesson newLesson = Lesson.builder()
@@ -98,18 +101,18 @@ public class LessonService {
 //        lessonRepository.save(lesson);
     }
 
-    private void studentHasConflict(Student student, LocalDateTime from, LocalDateTime to, Long lessonId) {
+    private void studentHasConflict(Student student, LocalDateTime from, LocalDateTime to) {
 
         if (lessonRepository.existsByStudentAndLessonDateGreaterThanAndLessonDateLessThan(student, from, to)) {
-            throw new LessonConflictException("Lesson with id " + lessonId + " already exists");
+            throw new LessonConflictException("Lesson Date is not available");
         } //todo rozkminić jak inaczej można to zrobić nie używając IdNot, które było powyżej
     }
 
 
-    private void teacherHasConflict(Teacher teacher, LocalDateTime from, LocalDateTime to, Long lessonId) {
+    private void teacherHasConflict(Teacher teacher, LocalDateTime from, LocalDateTime to) {
 
         if (lessonRepository.existsByTeacherAndLessonDateGreaterThanAndLessonDateLessThan(teacher, from, to)) {
-            throw new LessonConflictException("Lesson with id " + lessonId + " already exists");
+            throw new LessonConflictException("Lesson Date is not available");
         }
     }
 }

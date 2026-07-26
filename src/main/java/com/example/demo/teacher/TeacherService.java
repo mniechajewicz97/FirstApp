@@ -20,30 +20,27 @@ public class TeacherService {
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
 
+//todo poustawiac wszedzie tam gdzie trzeba soft delete ale tylko dla teachera
 
     public List<TeacherDTO> findAll() {
 
-        List<TeacherDTO> allTeachersDTOS = teacherRepository.findAll().stream()
+        List<TeacherDTO> allTeachersDTOS = teacherRepository.findAllByDeletedFalse().stream()
                 .map(TeacherDTO::from)
                 .toList();
         return allTeachersDTOS;
     }
+
     @Transactional
     public void deleteById(long id) {
 
-        Teacher removedTeacher = teacherRepository.findById(id)
+        Teacher teacher = teacherRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Teacher with id " + id + " not found"));
-        Set<Student> students = removedTeacher.getStudents();
-        students.forEach(student -> {
-            student.setTeacher(null);
-        });
-        studentRepository.saveAll(students); // zapisujemy studentow,
-        teacherRepository.delete(removedTeacher);
+        teacher.setDeleted(true);
 
     }
 
     public TeacherDTO findById(long id) {
-        TeacherDTO teacherDTO = teacherRepository.findById(id)
+        TeacherDTO teacherDTO = teacherRepository.findByIdAndDeletedFalse(id)
                 .map(TeacherDTO::from)
                 .orElseThrow(() -> new EntityNotFoundException("Teacher with id " + id + " not found"));
 
@@ -56,7 +53,7 @@ public class TeacherService {
     }
 
     public List<TeacherDTO> findByLanguagesContains(Language language) {
-        List<TeacherDTO> teacherDTOS = teacherRepository.findAllByLanguagesContains(language).stream()
+        List<TeacherDTO> teacherDTOS = teacherRepository.findAllByLanguagesContainsAndDeletedFalse(language).stream()
                 .map(TeacherDTO::from)// wywolanie metody statycznej dla kazdego elementu
                 .toList();
         return teacherDTOS;
