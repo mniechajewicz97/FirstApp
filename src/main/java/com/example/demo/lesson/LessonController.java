@@ -1,71 +1,53 @@
 package com.example.demo.lesson;
 
 
-import com.example.demo.lesson.model.Lesson;
-import com.example.demo.student.StudentService;
-import com.example.demo.teacher.TeacherService;
+import com.example.demo.common.dto.LessonDTO;
+import com.example.demo.lesson.model.command.CreateLessonCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/lessons")
 public class LessonController {
     private final LessonService lessonService;
-    private final StudentService studentService;
-    private final TeacherService teacherService;
 
     @GetMapping
-    public String getAll(Model model){
-        model.addAttribute("lessons", lessonService.findAll());
-        model.addAttribute("students", studentService.findAll());
-        model.addAttribute("teachers", teacherService.findAll());
-        return "lesson/list";
+    public List<LessonDTO> findAll() {
+        return lessonService.findAll();
     }
 
+    @DeleteMapping("/{id}")
+    public void deleteById(@PathVariable long id) {
+        lessonService.deleteById(id);
+    }
 
     @GetMapping("/{id}")
-    public String deleteById(@PathVariable long id) {
-        lessonService.deleteById(id);
-        return "redirect:/lessons";
+    public LessonDTO findById(@PathVariable long id) {
+        return lessonService.findById(id);
     }
-    @GetMapping("/create")
-    public String create(Model model){
-        model.addAttribute("lesson", new Lesson());
-        model.addAttribute("students", studentService.findAll());
-        model.addAttribute("teachers", teacherService.findAll());
-        return "lesson/register";
+
+    @PostMapping
+    public LessonDTO save(@RequestBody CreateLessonCommand lessonCommand) {
+        return lessonService.save(lessonCommand);
     }
-    @PostMapping("/create")
-    public String save(Lesson lesson, @RequestParam Long studentId, @RequestParam Long teacherId){
-        lessonService.save(lesson, studentId, teacherId);
-        return  "redirect:/lessons";
-    }
-    @GetMapping("/change")
-    public String change(Model model, @RequestParam Long lessonId){
-        model.addAttribute("lesson", lessonService.findById(lessonId));
-        return "lesson/change";
-    }
-    @PostMapping("/change")
-    public String change(@RequestParam Long lessonId,
-                         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime newDate) { //iso zmienia date z tekstowego formatu na localdatetime
+
+    @PatchMapping("/{lessonId}")
+    public void change(@PathVariable Long lessonId,
+                       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime newDate) { //iso zmienia date z tekstowego formatu na localdatetime
         lessonService.change(lessonId, newDate); // adnotacja datetimeformat mowi jak ten tekst przeczytac
-        return "redirect:/lessons";
-    }
 
     }
 
+}
 
-//    @GetMapping("/{id}")
-//    public Lesson findById(@PathVariable long id) {
-//        return lessonService.findById(id);
-//    }
+
+
 
 
 

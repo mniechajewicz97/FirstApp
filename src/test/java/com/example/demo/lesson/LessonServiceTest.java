@@ -3,7 +3,9 @@ package com.example.demo.lesson;
 import com.example.demo.common.Language;
 import com.example.demo.common.LessonConflictException;
 import com.example.demo.common.LessonDateInPastException;
+import com.example.demo.common.dto.LessonDTO;
 import com.example.demo.lesson.model.Lesson;
+import com.example.demo.lesson.model.command.CreateLessonCommand;
 import com.example.demo.student.StudentRepository;
 import com.example.demo.student.model.Student;
 import com.example.demo.teacher.TeacherRepository;
@@ -48,11 +50,30 @@ public class LessonServiceTest {
     @Test
     void testFindAll_ResultsInLessonsBeingReturned() {
         //given - przygotowanie danych i co maja robic mocki
-        List<Lesson> lessons = List.of(new Lesson(), new Lesson());
+        Student student = new Student();
+        Teacher teacher = new Teacher();
+        LocalDateTime date = LocalDateTime.now().plusDays(1);
+        LocalDateTime date2 = LocalDateTime.now().plusDays(2);
+
+        Lesson lesson1 = Lesson.builder()
+                .id(2L)
+                .student(student)
+                .teacher(teacher)
+                .lessonDate(date)
+                .build();
+        Lesson lesson2 = Lesson.builder()
+                .id(3L)
+                .student(student)
+                .teacher(teacher)
+                .lessonDate(date2)
+                .build();
+
+
+        List<Lesson> lessons = List.of(lesson1, lesson2);
         when(lessonRepository.findAll()).thenReturn(lessons);
 
         //when - akcja czyli wywołujemy nasza metode
-        List<Lesson> result = lessonService.findAll();
+        List<LessonDTO> result = lessonService.findAll();
 
         //then - weryfikacja czy result napewno zwrocil to co trzeba
 
@@ -63,16 +84,23 @@ public class LessonServiceTest {
     @Test
     void testFindById_ResultsInLessonBeingReturned() {
         //given
+        Student student = new Student();
+        Teacher teacher = new Teacher();
+        LocalDateTime date = LocalDateTime.now().plusDays(1);
         Lesson lesson = Lesson.builder()
                 .id(2L)
+                .student(student)
+                .teacher(teacher)
+                .lessonDate(date)
                 .build();
+
         when(lessonRepository.findById(2L)).thenReturn(Optional.of(lesson));
 
         //when
-        Lesson result = lessonService.findById(2L);
+        LessonDTO result = lessonService.findById(2L);
 
         //then
-        assertEquals(lesson, result);
+        assertEquals(lesson.getId(), result.getId());
         verify(lessonRepository).findById(2L);
 
     }
@@ -93,13 +121,14 @@ public class LessonServiceTest {
     @Test
     void testSave_ResultsInLessonsBeingSaved() {
         //given
-        Lesson lesson = Lesson.builder()
-                .id(1L)
-                .lessonDate(LocalDateTime.now().plusDays(1))
-                .build();
+
+        CreateLessonCommand lessonCommand = new CreateLessonCommand();
+        lessonCommand.setLessonDate(LocalDateTime.now().plusDays(1));
+        lessonCommand.setTeacherId(1L);
+        lessonCommand.setStudentId(2L);
 
         Student student = Student.builder()
-                .id(1L)
+                .id(2L)
                 .firstName("John")
                 .lastName("Doe")
                 .build();
@@ -110,11 +139,13 @@ public class LessonServiceTest {
                 .lastName("Sam")
                 .build();
 
+        when(lessonRepository.save(any(Lesson.class))) // zawsze zwroc ten konkretny obiekt lesson
+                .thenAnswer(invocation -> invocation.getArgument(0)); // invocation oznacza wywolanie mockowej metody
         when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
-        when(teacherRepository.findById(teacher.getId())).thenReturn(Optional.of(teacher));
+        when(teacherRepository.findByIdAndDeletedFalse(teacher.getId())).thenReturn(Optional.of(teacher));
         when(lessonRepository.existsByTeacherAndLessonDateGreaterThanAndLessonDateLessThan(any(), any(), any())).thenReturn(false); //false bo nie robimy unhappy path
         //when
-        lessonService.save(lesson, student.getId(), teacher.getId());
+        lessonService.save(lessonCommand);
         //then
         verify(lessonRepository).save(lessonCaptor.capture());
         Lesson saved = lessonCaptor.getValue();
@@ -127,13 +158,12 @@ public class LessonServiceTest {
     @Test
     void testSave_WhenLessonDateIsBeforeCurrentDate_ThrowsLessonDateInPastException() {
         //given
-        Lesson lesson = Lesson.builder()
-                .id(2L)
-                .lessonDate(LocalDateTime.now().minusHours(1))
-                .build();
+
+        CreateLessonCommand lessonCommand = new CreateLessonCommand();
+        lessonCommand.setLessonDate(LocalDateTime.now().minusHours(1));
 
         //when and then
-        LessonDateInPastException exception = assertThrows(LessonDateInPastException.class, () -> lessonService.save(lesson, 4L, 5L));
+        LessonDateInPastException exception = assertThrows(LessonDateInPastException.class, () -> lessonService.save(lessonCommand));
         assertEquals("Lesson date is before current date", exception.getMessage());
         verify(lessonRepository, never()).save(any(Lesson.class)); // sprawdzenie, ze lecja nie zostala zapisana
 
@@ -142,16 +172,20 @@ public class LessonServiceTest {
     @Test
     void testSave_WhenStudentDoesNotExist_ThrowsEntityNotFoundException() {
         //given
-        Lesson lesson = Lesson.builder()
-                .id(2L)
-                .lessonDate(LocalDateTime.now().plusHours(1))
-                .build();
-        when(studentRepository.findById(4L)).thenReturn(Optional.empty());
+
+        CreateLessonCommand lessonCommand = new CreateLessonCommand();
+        lessonCommand.setLessonDate(LocalDateTime.now().plusHours(1));
+        lessonCommand.setTeacherId(1L);
+        lessonCommand.setStudentId(2L);
+
+        when(studentRepository.findById(2L)).thenReturn(Optional.empty());
 
         //when and then
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> lessonService.save(lesson, 4L, 5L));
-        assertEquals("Student with id " + 4L + " not found", exception.getMessage());
-        verify(studentRepository).findById(4L);
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> lessonService.save(lessonCommand))
+                .withMessage("Student with id " + lessonCommand.getStudentId() + " not found");
+
+        verify(studentRepository).findById(2L);
         verify(lessonRepository, never()).save(any(Lesson.class));
         verifyNoInteractions(teacherRepository);
 
@@ -165,15 +199,20 @@ public class LessonServiceTest {
                 .lessonDate(LocalDateTime.now().plusHours(1))
                 .student(Student.builder().id(4L).build())
                 .build();
+        CreateLessonCommand lessonCommand = new CreateLessonCommand();
+        lessonCommand.setLessonDate(LocalDateTime.now().plusHours(1));
+        lessonCommand.setStudentId(4L);
+        lessonCommand.setTeacherId(5L);
 
         when(studentRepository.findById(4L)).thenReturn(Optional.of(lesson.getStudent()));
-        when(teacherRepository.findById(5L)).thenReturn(Optional.empty());
+        when(teacherRepository.findByIdAndDeletedFalse(5L)).thenReturn(Optional.empty());
 
         //when and then
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> lessonService.save(lesson, 4L, 5L));
-        assertEquals("Teacher with id " + 5L + " not found", exception.getMessage());
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(()-> lessonService.save(lessonCommand))
+                        .withMessage("Teacher with id " + lessonCommand.getTeacherId() + " not found");
         verify(studentRepository).findById(4L);
-        verify(teacherRepository).findById(5L);
+        verify(teacherRepository).findByIdAndDeletedFalse(5L);
         verifyNoInteractions(lessonRepository);
     }
 
@@ -193,20 +232,24 @@ public class LessonServiceTest {
                 .student(student)
                 .teacher(teacher)
                 .build();
-        Long lessonId = lesson.getId();
+        LocalDateTime date = LocalDateTime.now().plusHours(1);
 
-        LocalDateTime newDate = LocalDateTime.now().plusHours(1);
-        LocalDateTime from = newDate.minusHours(1);
-        LocalDateTime to = newDate.plusHours(1);
+        CreateLessonCommand lessonCommand = new CreateLessonCommand();
+        lessonCommand.setLessonDate(date);
+        lessonCommand.setStudentId(4L);
+        lessonCommand.setTeacherId(5L);
+
+        LocalDateTime from = date.minusHours(1);
+        LocalDateTime to = date.plusHours(1);
 
         when(studentRepository.findById(4L)).thenReturn(Optional.of(student));
-        when(teacherRepository.findById(5L)).thenReturn(Optional.of(teacher));
+        when(teacherRepository.findByIdAndDeletedFalse(5L)).thenReturn(Optional.of(teacher));
         when(lessonRepository.existsByTeacherAndLessonDateGreaterThanAndLessonDateLessThan(lesson.getTeacher(), from, to)).thenReturn(true);
 
         //when and then
         assertThatExceptionOfType(LessonConflictException.class)
-                .isThrownBy(() -> lessonService.save(lesson, 4L, 5L))
-                .withMessage("Lesson with id " + lessonId + " already exists");
+                .isThrownBy(() -> lessonService.save(lessonCommand))
+                .withMessage("Lesson already exists");
 
         verify(lessonRepository).existsByTeacherAndLessonDateGreaterThanAndLessonDateLessThan(teacher, from, to);
         verifyNoMoreInteractions(lessonRepository);
@@ -319,7 +362,7 @@ public class LessonServiceTest {
 
         assertThatExceptionOfType(LessonConflictException.class)
                 .isThrownBy(() -> lessonService.change(2L, newDate))
-                .withMessage("Lesson with id " + lessonId + " already exists");
+                .withMessage("Lesson Date is not available");
 
         verify(lessonRepository).findById(lessonId);
         verifyNoMoreInteractions(lessonRepository);

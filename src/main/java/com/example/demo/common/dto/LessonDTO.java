@@ -1,5 +1,6 @@
 package com.example.demo.common.dto;
 
+import com.example.demo.lesson.model.Lesson;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -11,9 +12,16 @@ import java.time.LocalDateTime;
 
 public class LessonDTO {
     private Long id;
-    private String studentFullName;
-    private String teacherFullName;
+    private StudentDTO student;
+    private TeacherDTO teacher;
     private LocalDateTime lessonDate;
 
+public static LessonDTO from(Lesson lesson){
+    return new LessonDTO(lesson.getId(),
+            StudentDTO.from(lesson.getStudent()),
+            TeacherDTO.from(lesson.getTeacher()),
+            lesson.getLessonDate());
+
+}
 
 }

@@ -3,7 +3,6 @@ package com.example.demo.teacher;
 import com.example.demo.common.Language;
 import com.example.demo.common.dto.TeacherDTO;
 import com.example.demo.student.StudentRepository;
-import com.example.demo.student.model.Student;
 import com.example.demo.teacher.model.Teacher;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -17,8 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,14 +39,14 @@ public class TeacherServiceTest {
     void testFindAll_ResultInTeacherBeingReturned() {
         //given
         List<Teacher> teachers = List.of(new Teacher(), new Teacher(), new Teacher());
-        when(teacherRepository.findAll()).thenReturn(teachers);
+        when(teacherRepository.findAllByDeletedFalse()).thenReturn(teachers);
 
         //when
         List<TeacherDTO> result = teacherService.findAll();
 
         //then
         assertEquals(3, result.size());
-        verify(teacherRepository).findAll();
+        verify(teacherRepository).findAllByDeletedFalse();
 
     }
 
@@ -56,43 +55,25 @@ public class TeacherServiceTest {
 
         //given
         Teacher teacher = Teacher.builder()
-                .id(1L)
+                .id(2L)
                 .firstName("Jack")
                 .lastName("Sack")
                 .build();
-        Long teacherId = teacher.getId();
-
-        Student student1 = Student.builder()
-                .id(2L)
-                .firstName("Pak")
-                .lastName("Mak")
-                .teacher(teacher)
-                .build();
-        Student student2 = Student.builder()
-                .id(3L)
-                .firstName("Plak")
-                .lastName("Flak")
-                .teacher(teacher)
-                .build();
-        Set<Student> students = new HashSet<>();
-        students.add(student1);
-        students.add(student2);
-        teacher.setStudents(students);
-
+        long teacherId = teacher.getId();
         when(teacherRepository.findById(teacherId)).thenReturn(Optional.of(teacher));
+
 
         //when
         teacherService.deleteById(teacherId);
 
         //then
+        assertTrue(teacher.isDeleted());
         verify(teacherRepository).findById(teacherId);
-        assertNull(student1.getTeacher());
-        assertNull(student2.getTeacher());
-        verify(studentRepository).saveAll(students);
-        verify(teacherRepository).delete(teacher);
+
 
 
     }
+
     @Test
     void testDeleteById_WhenTeacherDoesntExist_ThrowsEntityNotFoundException() {
 
@@ -102,6 +83,7 @@ public class TeacherServiceTest {
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> teacherService.deleteById(teacherId))
                 .withMessage("Teacher with id " + teacherId + " not found");
+        verify(teacherRepository).findById(teacherId);
         verifyNoMoreInteractions(teacherRepository);
 
     }
@@ -115,23 +97,24 @@ public class TeacherServiceTest {
                 .lastName("Sack")
                 .build();
         Long teacherId = teacher.getId();
-        when(teacherRepository.findById(teacherId)).thenReturn(Optional.of(teacher));
+        when(teacherRepository.findByIdAndDeletedFalse(teacherId)).thenReturn(Optional.of(teacher));
 
         //when
         TeacherDTO result = teacherService.findById(teacherId);
 
         //then
-        verify(teacherRepository).findById(teacherId);
+        verify(teacherRepository).findByIdAndDeletedFalse(teacherId);
         assertEquals(teacher.getFirstName(), result.getFirstName());
         assertEquals(teacher.getLastName(), result.getLastName());
         assertEquals(teacherId, result.getId());
 
     }
+
     @Test
     void testFindById_WhenTeacherDoesntExist_ThrowsEntityNotFoundException() {
 
         Long teacherId = 1L;
-        when(teacherRepository.findById(teacherId)).thenReturn(Optional.empty());
+        when(teacherRepository.findByIdAndDeletedFalse(teacherId)).thenReturn(Optional.empty());
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> teacherService.findById(teacherId))
                 .withMessage("Teacher with id " + teacherId + " not found");
@@ -157,13 +140,13 @@ public class TeacherServiceTest {
                 .build();
 
 
-        when(teacherRepository.findAllByLanguagesContains(language)).thenReturn(List.of(teacher, teacher2));
+        when(teacherRepository.findAllByLanguagesContainsAndDeletedFalse(language)).thenReturn(List.of(teacher, teacher2));
 
         //when
         List<TeacherDTO> result = teacherService.findByLanguagesContains(language);
 
         //then
-        verify(teacherRepository).findAllByLanguagesContains(language);
+        verify(teacherRepository).findAllByLanguagesContainsAndDeletedFalse(language);
         assertEquals(2, result.size());
         assertEquals(teacher.getFirstName(), result.get(0).getFirstName());
         assertEquals(teacher.getLastName(), result.get(0).getLastName());

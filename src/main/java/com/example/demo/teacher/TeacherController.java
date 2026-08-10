@@ -2,62 +2,44 @@ package com.example.demo.teacher;
 
 import com.example.demo.common.Language;
 import com.example.demo.common.dto.TeacherDTO;
-import com.example.demo.student.StudentService;
-import com.example.demo.teacher.model.Teacher;
+import com.example.demo.teacher.model.command.CreateTeacherCommand;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-import java.util.Set;
 
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/teachers")
 public class TeacherController {
     private final TeacherService teacherService;
-    private final StudentService studentService;
 
 
     @GetMapping
-    public String getAll(Model model) {
-        model.addAttribute("teachers", teacherService.findAll());
-        model.addAttribute("students", studentService.findAll());
-        return "teacher/list";
+    public List<TeacherDTO> findAll() {
+        return teacherService.findAll();
     }
 
-    @GetMapping("/{id}")
-    public String delete(@PathVariable long id) {
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable long id) {
         teacherService.deleteById(id);
-        return "redirect:/teachers";
     }
 
-    @GetMapping("/create")
-    public String create(Model model) {
-        model.addAttribute("languages", Language.values());
-
-        return "teacher/register";
+    @PostMapping
+    public TeacherDTO save(@RequestBody CreateTeacherCommand teacherCommand) {
+        return teacherService.save(teacherCommand);
 
     }
 
-    @PostMapping("/create")
-    public String save(Teacher teacher) {
-        teacherService.save(teacher);
-        return "redirect:/teachers";
-    }
     @GetMapping(params = "language")
-    @ResponseBody // tresc od http ktora dostaje user
+//    @ResponseBody // tresc od http ktora dostaje user, nie jest to juz nam potrzebne bo RestController działa jak polaczenie controllera i responseBody
     public List<TeacherDTO> findByLanguages(@RequestParam Language language) {
         return teacherService.findByLanguagesContains(language);
     }
 
+    @GetMapping("/{id}")
+    public TeacherDTO findById(@PathVariable long id) {
+        return teacherService.findById(id);
+    }
 }
-
-
-//    @GetMapping("/{id}")
-//    public Teacher findById(@PathVariable long id) {
-//        return teacherService.findById(id);
-//    }
 

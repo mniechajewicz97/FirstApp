@@ -3,16 +3,15 @@ package com.example.demo.teacher;
 import com.example.demo.common.Language;
 import com.example.demo.common.dto.TeacherDTO;
 import com.example.demo.student.StudentRepository;
-import com.example.demo.student.model.Student;
 import com.example.demo.teacher.model.Teacher;
+import com.example.demo.teacher.model.command.CreateTeacherCommand;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
+
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +19,6 @@ public class TeacherService {
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
 
-//todo poustawiac wszedzie tam gdzie trzeba soft delete ale tylko dla teachera
 
     public List<TeacherDTO> findAll() {
 
@@ -47,9 +45,8 @@ public class TeacherService {
         return teacherDTO;
     }
 
-    public void save(Teacher teacher) {
-
-        teacherRepository.save(teacher);
+    public TeacherDTO save(CreateTeacherCommand createTeacherCommand) {
+        return TeacherDTO.from(teacherRepository.save(createTeacherCommand.toEntity()));
     }
 
     public List<TeacherDTO> findByLanguagesContains(Language language) {
